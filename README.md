@@ -1,4 +1,4 @@
-# ProjT Launcher Meta
+# ProjT Launcher Meta by YONG Do-Hyun
 
 Scripts to generate jsons and jars that ProjT Launcher will access.
 
