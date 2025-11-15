@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "meta"
 version = "0.0.1"
-description = "Prism Launcher meta generator"
+description = "ProjT Launcher meta generator"
 authors = ["Sefa Eyeoglu <contact@scrumplex.net>"]
 license = "MS-PL"
 readme = "README.md"
-repository = "https://github.com/PrismLauncher/meta"
-documentation = "https://github.com/PrismLauncher/meta"
-keywords = ["metadata", "prism", "launcher"]
+repository = "https://github.com/Project-Tick/meta"
+documentation = "https://github.com/Project-Tick/meta"
+keywords = ["metadata", "projt", "launcher"]
 
 [tool.poetry.scripts]
 generateFabric = "meta.run.generate_fabric:main"

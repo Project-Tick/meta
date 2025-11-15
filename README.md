@@ -1,6 +1,6 @@
-# Prism Launcher Meta
+# ProjT Launcher Meta
 
-Scripts to generate jsons and jars that Prism Launcher will access.
+Scripts to generate jsons and jars that ProjT Launcher will access.
 
 ## Recommended Deployment
 
@@ -10,7 +10,7 @@ Assuming you have a Flake-based NixOS configuration
 
     ```nix
     {
-      inputs.prism-meta.url = "github:PrismLauncher/meta";
+      inputs.projt-meta.url = "github:Project-Tick/meta";
     }
     ```
 
@@ -18,7 +18,7 @@ Assuming you have a Flake-based NixOS configuration
 
     ```nix
     {inputs, ...}: {
-      imports = [inputs.prism-meta.nixosModules.default];
+      imports = [inputs.projt-meta.nixosModules.default];
       services.blockgame-meta = {
         enable = true;
         settings = {
