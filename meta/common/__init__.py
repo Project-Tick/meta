@@ -8,7 +8,7 @@ import requests
 from cachecontrol import CacheControl  # type: ignore
 from cachecontrol.caches import FileCache  # type: ignore
 
-LAUNCHER_MAVEN = "https://files.prismlauncher.org/maven/%s"
+LAUNCHER_MAVEN = "https://files.projtlauncher.yongdohyun.org.tr/maven/%s"
 
 
 def serialize_datetime(dt: datetime.datetime):
@@ -83,6 +83,6 @@ def default_session():
     forever_cache = FileCache(os.path.join(cache_path(), "http_cache"), forever=True)
     sess = CacheControl(requests.Session(), forever_cache)
 
-    sess.headers.update({"User-Agent": "PrismLauncherMeta/1.0"})
+    sess.headers.update({"User-Agent": "ProjTLauncherMeta/1.0"})
 
     return sess
