@@ -2,7 +2,7 @@
 name = "meta"
 version = "0.0.1"
 description = "ProjT Launcher meta generator"
-authors = ["Sefa Eyeoglu <contact@scrumplex.net>"]
+authors = ["Yong Do Hyun <froster12@naver.com>"]
 license = "MS-PL"
 readme = "README.md"
 repository = "https://github.com/Project-Tick/meta"
