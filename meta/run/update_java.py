@@ -1,4 +1,5 @@
 import os
+import time
 
 from meta.common import upstream_path, ensure_upstream_dir, default_session
 from meta.common.java import (
@@ -43,8 +44,19 @@ sess = default_session()
 
 def main():
     print("Getting Adoptium Release Manifests ")
-    r = sess.get(ADOPTIUM_API_AVAILABLE_RELEASES)
-    r.raise_for_status()
+    for attempt in range(3):
+        r = sess.get(ADOPTIUM_API_AVAILABLE_RELEASES)
+        if r.status_code >= 500:
+            if attempt < 2:
+                time.sleep(1 * (attempt + 1))
+                continue
+            else:
+                r.raise_for_status()
+        else:
+            r.raise_for_status()
+            break
+    else:
+        r.raise_for_status()
 
     available = AdoptiumAvailableReleases(**r.json())
 
@@ -66,11 +78,25 @@ def main():
             )
             api_call = adoptiumAPIFeatureReleasesUrl(feature, query=query)
             print("Fetching JRE Page:", page, api_call)
-            r_rls = sess.get(api_call)
+            for attempt in range(3):
+                r_rls = sess.get(api_call)
+                if r_rls.status_code == 404:
+                    break
+                elif r_rls.status_code >= 500:
+                    if attempt < 2:
+                        time.sleep(1 * (attempt + 1))
+                        continue
+                    else:
+                        r_rls.raise_for_status()
+                else:
+                    r_rls.raise_for_status()
+                    break
+            else:
+                # If all attempts failed
+                r_rls.raise_for_status()
+
             if r_rls.status_code == 404:
                 break
-            else:
-                r_rls.raise_for_status()
 
             releases = list(AdoptiumRelease(**rls) for rls in r_rls.json())
             releases_for_feature.extend(releases)
@@ -106,11 +132,24 @@ def main():
 
         print("Processing Page:", page, api_call)
 
-        r = sess.get(api_call)
-        if r.status_code == 404:
-            break
+        for attempt in range(3):
+            r = sess.get(api_call)
+            if r.status_code == 404:
+                break
+            elif r.status_code >= 500:
+                if attempt < 2:
+                    time.sleep(1 * (attempt + 1))
+                    continue
+                else:
+                    r.raise_for_status()
+            else:
+                r.raise_for_status()
+                break
         else:
             r.raise_for_status()
+
+        if r.status_code == 404:
+            break
 
         packages = list(ZuluPackage(**pkg) for pkg in r.json())
         zulu_packages.extend(packages)
@@ -141,8 +180,19 @@ def main():
 
             api_call = azulApiPackageDetailUrl(pkg.package_uuid)
             print("Fetching Azul package manifest:", pkg.package_uuid)
-            r_pkg = sess.get(api_call)
-            r_pkg.raise_for_status()
+            for attempt in range(3):
+                r_pkg = sess.get(api_call)
+                if r_pkg.status_code >= 500:
+                    if attempt < 2:
+                        time.sleep(1 * (attempt + 1))
+                        continue
+                    else:
+                        r_pkg.raise_for_status()
+                else:
+                    r_pkg.raise_for_status()
+                    break
+            else:
+                r_pkg.raise_for_status()
 
             pkg_detail = ZuluPackageDetail(**r_pkg.json())
             pkg_detail.write(pkg_file)
