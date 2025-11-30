@@ -31,6 +31,9 @@ function launcher_git() {
 # make sure we *could* push to our repo
 
 currentDate=$(date -I)
+currentHour=$(date +"%H")
+currentMinute=$(date +"%M")
+currentSecond=$(date +"%S")
 
 upstream_git reset --hard HEAD || exit 1
 
@@ -51,7 +54,7 @@ if [ "${DEPLOY_TO_GIT}" = true ]; then
     upstream_git add liteloader/*.json || fail_in
     upstream_git add java_runtime/adoptium/available_releases.json java_runtime/adoptium/versions/*.json java_runtime/azul/packages.json java_runtime/azul/versions/*.json || fail_in
     if ! upstream_git diff --cached --exit-code; then
-        upstream_git commit -a -m "Update ${currentDate}" || fail_in
+        upstream_git commit -a -m "Update Date ${currentDate} Time ${currentHour}:${currentMinute}:${currentSecond}" || fail_in
         upstream_git push || exit 1
     fi
 fi
@@ -77,7 +80,7 @@ if [ "${DEPLOY_TO_GIT}" = true ]; then
     launcher_git add net.minecraft.java/* net.adoptium.java/* com.azul.java/* || fail_out
 
     if ! launcher_git diff --cached --exit-code; then
-        launcher_git commit -a -m "Update ${currentDate}" || fail_out
+        launcher_git commit -a -m "Update Date ${currentDate} Time ${currentHour}:${currentMinute}:${currentSecond}" || fail_out
         launcher_git push || exit 1
     fi
 fi
