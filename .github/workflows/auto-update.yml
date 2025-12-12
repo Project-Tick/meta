@@ -78,7 +78,7 @@ jobs:
     
       - name: Run update scripts
         run: |
-          set -euo pipefail
+          status=0
           nix develop .# --command bash -lc "
             set -euo pipefail
             python -m meta.run.update_mojang
@@ -88,12 +88,13 @@ jobs:
             python -m meta.run.update_quilt
             python -m meta.run.update_liteloader
             python -m meta.run.update_java
-          " > logs/update.log 2>&1
-          tail -n 200 logs/update.log
+          " > logs/update.log 2>&1 || status=$?
+          tail -n 200 logs/update.log || true
+          exit $status
     
       - name: Generate meta files
         run: |
-          set -euo pipefail
+          status=0
           nix develop .# --command bash -lc "
             set -euo pipefail
             python -m meta.run.generate_mojang
@@ -104,8 +105,9 @@ jobs:
             python -m meta.run.generate_liteloader
             python -m meta.run.generate_java
             python -m meta.run.index
-          " > logs/generate.log 2>&1
-          tail -n 200 logs/generate.log
+          " > logs/generate.log 2>&1 || status=$?
+          tail -n 200 logs/generate.log || true
+          exit $status
     
       - name: Commit and push changes
         run: |
