@@ -44,6 +44,7 @@ jobs:
         run: |
           mkdir -p caches/forge_cache
           mkdir -p caches/http_cache
+          mkdir -p logs
     
       - name: Checkout upstream (uses secret token)
         uses: actions/checkout@v4
@@ -77,7 +78,9 @@ jobs:
     
       - name: Run update scripts
         run: |
+          set -euo pipefail
           nix develop .# --command bash -lc "
+            set -euo pipefail
             python -m meta.run.update_mojang
             python -m meta.run.update_forge
             python -m meta.run.update_neoforge
@@ -85,11 +88,14 @@ jobs:
             python -m meta.run.update_quilt
             python -m meta.run.update_liteloader
             python -m meta.run.update_java
-          "
+          " > logs/update.log 2>&1
+          tail -n 200 logs/update.log
     
       - name: Generate meta files
         run: |
+          set -euo pipefail
           nix develop .# --command bash -lc "
+            set -euo pipefail
             python -m meta.run.generate_mojang
             python -m meta.run.generate_forge
             python -m meta.run.generate_neoforge
@@ -98,7 +104,8 @@ jobs:
             python -m meta.run.generate_liteloader
             python -m meta.run.generate_java
             python -m meta.run.index
-          "
+          " > logs/generate.log 2>&1
+          tail -n 200 logs/generate.log
     
       - name: Commit and push changes
         run: |
@@ -123,3 +130,11 @@ jobs:
             caches/forge_cache
             caches/http_cache
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+
+      - name: Upload logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meta-logs-${{ github.run_id }}
+          path: logs/*.log
+          retention-days: 7
