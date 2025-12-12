@@ -106,7 +106,7 @@ jobs:
             python -m meta.run.generate_java
             python -m meta.run.index
           " > logs/generate.log 2>&1 || status=$?
-          tail -n 200 logs/generate.log || true
+          tail -f 200 logs/generate.log || true
           exit $status
     
       - name: Commit and push changes
