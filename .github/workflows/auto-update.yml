@@ -66,6 +66,23 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install .
 
+      - name: Choose repo URLs (fallback to HTTPS if no SSH keys)
+        env:
+          META_UPSTREAM_URL: ${{ secrets.META_UPSTREAM_URL }}
+          META_LAUNCHER_URL: ${{ secrets.META_LAUNCHER_URL }}
+          DEPLOY_SSH_KEY_UPSTREAM: ${{ secrets.DEPLOY_SSH_KEY_UPSTREAM }}
+          DEPLOY_SSH_KEY_LAUNCHER: ${{ secrets.DEPLOY_SSH_KEY_LAUNCHER }}
+        run: |
+          if [ -n "$DEPLOY_SSH_KEY_UPSTREAM" ] && [ -n "$DEPLOY_SSH_KEY_LAUNCHER" ]; then
+            echo "Using SSH URLs"
+            echo "META_UPSTREAM_URL=${META_UPSTREAM_URL:-git@github.com:Project-Tick/meta-upstream.git}" >> "$GITHUB_ENV"
+            echo "META_LAUNCHER_URL=${META_LAUNCHER_URL:-git@github.com:Project-Tick/meta-launcher.git}" >> "$GITHUB_ENV"
+          else
+            echo "SSH keys not provided; falling back to HTTPS"
+            echo "META_UPSTREAM_URL=https://github.com/Project-Tick/meta-upstream.git" >> "$GITHUB_ENV"
+            echo "META_LAUNCHER_URL=https://github.com/Project-Tick/meta-launcher.git" >> "$GITHUB_ENV"
+          fi
+
       - name: Prepare state and cache directories
         run: |
           mkdir -p "$STATE_DIRECTORY" "$CACHE_DIRECTORY"
