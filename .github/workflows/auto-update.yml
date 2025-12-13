@@ -83,6 +83,23 @@ jobs:
             echo "META_LAUNCHER_URL=https://github.com/Project-Tick/meta-launcher.git" >> "$GITHUB_ENV"
           fi
 
+      - name: Configure git auth for HTTPS (PAT recommended)
+        env:
+          META_BOT_TOKEN: ${{ secrets.META_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$META_BOT_TOKEN" ]; then
+            git config --global url."https://${META_BOT_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+            git config --global url."https://${META_BOT_TOKEN}:x-oauth-basic@github.com/".insteadOf "git@github.com:"
+            echo "Using META_BOT_TOKEN for GitHub authentication"
+          elif [ -n "$GITHUB_TOKEN" ]; then
+            git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+            git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "git@github.com:"
+            echo "Using GITHUB_TOKEN for GitHub authentication (must have access to target repos)"
+          else
+            echo "No token provided; HTTPS pushes will fail. Add META_BOT_TOKEN secret with access to meta-upstream and meta-launcher."
+          fi
+
       - name: Prepare state and cache directories
         run: |
           mkdir -p "$STATE_DIRECTORY" "$CACHE_DIRECTORY"
