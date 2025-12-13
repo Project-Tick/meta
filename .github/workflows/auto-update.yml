@@ -15,8 +15,8 @@ permissions:
 env:
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
   PYTHONUNBUFFERED: "1"
-  STATE_DIRECTORY: ${{ runner.temp }}/meta-state
-  CACHE_DIRECTORY: ${{ runner.temp }}/meta-cache
+  STATE_DIRECTORY: /tmp/meta-state
+  CACHE_DIRECTORY: /tmp/meta-cache
   META_UPSTREAM_URL: ${{ secrets.META_UPSTREAM_URL }}
   META_LAUNCHER_URL: ${{ secrets.META_LAUNCHER_URL }}
 
