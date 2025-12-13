@@ -1,5 +1,5 @@
-export META_UPSTREAM_URL="https://github.com/Project-Tick/meta-upstream.git"
-export META_LAUNCHER_URL="https://github.com/Project-Tick/meta-launcher.git"
+export META_UPSTREAM_URL="git@github.com:Project-Tick/meta-upstream.git"
+export META_LAUNCHER_URL="git@github.com:Project-Tick/meta-launcher.git"
 
 
 export META_UPSTREAM_DIR="upstream"

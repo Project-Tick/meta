@@ -17,8 +17,6 @@ env:
   PYTHONUNBUFFERED: "1"
   STATE_DIRECTORY: /tmp/meta-state
   CACHE_DIRECTORY: /tmp/meta-cache
-  META_UPSTREAM_URL: ${{ secrets.META_UPSTREAM_URL }}
-  META_LAUNCHER_URL: ${{ secrets.META_LAUNCHER_URL }}
 
 jobs:
   update:

@@ -193,6 +193,15 @@ class MojangJavaComponent(StrEnum):
     Delta = "java-runtime-delta"
 
 
+    @classmethod # newmethod
+    def _missing_(cls, value: str):
+        member = str.__new__(cls, value)
+        member._name_ = value.upper().replace("-", "_")
+        member._value_ = value
+        cls._value2member_map_[value] = member
+        cls._member_map_[member._name_] = member
+        return member
+
 class JavaVersion(MetaBase):
     component: MojangJavaComponent = MojangJavaComponent.JreLegacy
     major_version: int = Field(8, alias="majorVersion")
