@@ -194,6 +194,10 @@ def process_forge_version(version, jar_path):
                 with jar.open("version.json") as profile_zip_entry:
                     version_data = profile_zip_entry.read()
 
+                    version_data = re.sub(
+                        rb'([+-])(\d):(\d{2})"', rb'\g<1>0\g<2>:\g<3>"', version_data
+                    )
+
                     # Process: does it parse?
                     MojangVersion.parse_raw(version_data)
 
