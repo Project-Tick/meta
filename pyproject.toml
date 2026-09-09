@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "meta"
-version = "10.0.3"
+version = "11.0.0"
 description = "MeshMC meta generator"
 authors = ["Mehmet Samet Duman <yongdohyun@projecttick.org>"]
 license = "MS-PL"
-readme = "README"
+readme = "README.md"
 repository = "https://github.com/Project-Tick/Project-Tick"
 documentation = "https://github.com/Project-Tick/Project-Tick"
 keywords = ["metadata", "meshmc", "instance"]
