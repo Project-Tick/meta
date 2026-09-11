@@ -80,45 +80,9 @@ jobs:
           META_LAUNCHER_URL: ${{ secrets.META_LAUNCHER_URL }}
           DEPLOY_SSH_KEY_UPSTREAM: ${{ secrets.DEPLOY_SSH_KEY_UPSTREAM }}
           DEPLOY_SSH_KEY_LAUNCHER: ${{ secrets.DEPLOY_SSH_KEY_UPSTREAM }}
-          DEPLOY_PAT: ${{ secrets.DEPLOY_PAT }}
-          META_BOT_TOKEN: ${{ secrets.META_BOT_TOKEN }}
         run: |
-          token="${DEPLOY_PAT:-$META_BOT_TOKEN}"
-          if [ -n "$token" ]; then
-            echo "Using HTTPS URLs with token"
-            echo "META_UPSTREAM_URL=https://x-access-token:${token}@github.com/Project-Tick/meta-upstream.git" >> "$GITHUB_ENV"
-            echo "META_LAUNCHER_URL=https://x-access-token:${token}@github.com/Project-Tick/meta-launcher.git" >> "$GITHUB_ENV"
-            exit 0
-          fi
-
-          if [ -n "$DEPLOY_SSH_KEY_UPSTREAM" ] || [ -n "$DEPLOY_SSH_KEY_LAUNCHER" ]; then
-            echo "Using SSH URLs (no token supplied)"
             echo "META_UPSTREAM_URL=${META_UPSTREAM_URL:-git@github.com:Project-Tick/meta-upstream.git}" >> "$GITHUB_ENV"
             echo "META_LAUNCHER_URL=${META_LAUNCHER_URL:-git@github.com:Project-Tick/meta-launcher.git}" >> "$GITHUB_ENV"
-            exit 0
-          fi
-
-          echo "No token or SSH keys provided; cannot push to repos." >&2
-          exit 1
-
-      - name: Configure git auth for HTTPS (PAT recommended)
-        env:
-          META_BOT_TOKEN: ${{ secrets.META_BOT_TOKEN }}
-          DEPLOY_PAT: ${{ secrets.DEPLOY_PAT }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          token="${DEPLOY_PAT:-$META_BOT_TOKEN}"
-          if [ -n "$token" ]; then
-            git config --global url."https://${token}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
-            git config --global url."https://${token}:x-oauth-basic@github.com/".insteadOf "git@github.com:"
-            echo "Using PAT for GitHub authentication"
-          elif [ -n "$GH_TOKEN" ]; then
-            git config --global url."https://${GH_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
-            git config --global url."https://${GH_TOKEN}:x-oauth-basic@github.com/".insteadOf "git@github.com:"
-            echo "Using GH_TOKEN for GitHub authentication (must have access to target repos)"
-          else
-            echo "No token provided; HTTPS pushes will fail. Add DEPLOY_PAT secret with access to meta-upstream and meta-launcher."
-          fi
 
       - name: Prepare state and cache directories
         run: |
@@ -133,4 +97,6 @@ jobs:
       - name: Run updater
         env:
           DEPLOY_TO_GIT: true
+          DEPLOY_SSH_KEY_UPSTREAM: ${{ secrets.DEPLOY_SSH_KEY_UPSTREAM }}
+          DEPLOY_SSH_KEY_LAUNCHER: ${{ secrets.DEPLOY_SSH_KEY_UPSTREAM }}
         run: ./update.sh
