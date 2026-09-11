@@ -60,6 +60,7 @@ jobs:
           add_key "$DEPLOY_SSH_KEY_UPSTREAM" ~/.ssh/deploy_key_upstream
           add_key "$DEPLOY_SSH_KEY_LAUNCHER" ~/.ssh/deploy_key_launcher
 
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
 
       - name: Set up Python
@@ -92,6 +93,9 @@ jobs:
         run: chmod +x init.sh update.sh
 
       - name: Initialize upstream and launcher repositories
+        env:
+          META_UPSTREAM_URL: "git@github.com:Project-Tick/meta-upstream.git"
+          META_LAUNCHER_URL: "git@github.com:Project-Tick/meta-launcher.git"
         run: ./init.sh
 
       - name: Run updater
@@ -99,4 +103,6 @@ jobs:
           DEPLOY_TO_GIT: true
           DEPLOY_SSH_KEY_UPSTREAM: ${{ secrets.DEPLOY_SSH_KEY_UPSTREAM }}
           DEPLOY_SSH_KEY_LAUNCHER: ${{ secrets.DEPLOY_SSH_KEY_UPSTREAM }}
+          META_UPSTREAM_URL: "git@github.com:Project-Tick/meta-upstream.git"
+          META_LAUNCHER_URL: "git@github.com:Project-Tick/meta-launcher.git"
         run: ./update.sh
