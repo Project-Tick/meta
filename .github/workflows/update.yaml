@@ -131,4 +131,6 @@ jobs:
         run: ./init.sh
 
       - name: Run updater
+        env:
+          DEPLOY_TO_GIT: true
         run: ./update.sh
