@@ -21,6 +21,11 @@ ensure_upstream_dir(META_DIR)
 
 sess = default_session()
 
+QUILT_MAVEN_BLACKLIST = {
+    "org.quiltmc:quilt-loader:0.18.6-beta.1",
+    "org.quiltmc:quilt-loader:0.16.0-beta.9",
+}
+
 
 def get_maven_url(maven_key, server, ext):
     parts = maven_key.split(":", 3)
@@ -73,6 +78,10 @@ def compute_jar_file(path, url):
 
 
 def compute_jar_file_concurrent(component, it):
+    if it["maven"] in QUILT_MAVEN_BLACKLIST:
+        print(f"Skipping blacklisted Quilt artifact {it['maven']}")
+        return
+
     print(f"Processing {component} {it['version']} ")
     jar_maven_url = get_maven_url(
         it["maven"], "https://maven.quiltmc.org/repository/release/", ".jar"
@@ -85,6 +94,10 @@ def compute_jar_file_concurrent(component, it):
 
 
 def get_json_file_concurrent(it):
+    if it["maven"] in QUILT_MAVEN_BLACKLIST:
+        print(f"Skipping blacklisted Quilt artifact {it['maven']}")
+        return
+
     print(f"Downloading JAR info for loader {it['version']} ")
     maven_url = get_maven_url(
         it["maven"], "https://maven.quiltmc.org/repository/release/", ".json"
