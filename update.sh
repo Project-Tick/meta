@@ -41,7 +41,9 @@ python -m meta.run.update_mojang || fail_in
 python -m meta.run.update_forge || fail_in
 python -m meta.run.update_neoforge || fail_in
 python -m meta.run.update_fabric || fail_in
+python -m meta.run.update_babric || fail_in
 python -m meta.run.update_quilt || fail_in
+python -m meta.run.update_ornithe || fail_in
 python -m meta.run.update_liteloader || fail_in
 python -m meta.run.update_java || fail_in
 python -m meta.run.update_risugami || fail_in
@@ -54,7 +56,9 @@ if [ "${DEPLOY_TO_GIT}" = true ]; then
     upstream_git add forge/*.json forge/version_manifests/*.json forge/installer_manifests/*.json forge/files_manifests/*.json forge/installer_info/*.json forge/jars/*.sha1 || fail_in
     upstream_git add neoforge/*.json neoforge/version_manifests/*.json neoforge/installer_manifests/*.json neoforge/files_manifests/*.json neoforge/installer_info/*.json neoforge/jars/*.sha1 || fail_in
     upstream_git add fabric/loader-installer-json/*.json fabric/meta-v2/*.json fabric/jars/*.json || fail_in
+    upstream_git add babric/meta-v2/*.json babric/jars/*.json || fail_in
     upstream_git add quilt/loader-installer-json/*.json quilt/meta-v3/*.json quilt/jars/*.json || fail_in
+    upstream_git add ornithe/meta-v3/*.json ornithe/libraries/*.json ornithe/jars/*.json || fail_in
     upstream_git add liteloader/*.json || fail_in
     upstream_git add optifine/*.json || fail_in
     upstream_git add risugami/*.json || fail_in
@@ -73,7 +77,9 @@ python -m meta.run.generate_mojang || fail_out
 python -m meta.run.generate_forge || fail_out
 python -m meta.run.generate_neoforge || fail_out
 python -m meta.run.generate_fabric || fail_out
+python -m meta.run.generate_babric || fail_out
 python -m meta.run.generate_quilt || fail_out
+python -m meta.run.generate_ornithe || fail_out
 python -m meta.run.generate_liteloader || fail_out
 python -m meta.run.generate_java || fail_out
 python -m meta.run.generate_risugami || fail_in
@@ -87,6 +93,7 @@ if [ "${DEPLOY_TO_GIT}" = true ]; then
     launcher_git add net.minecraftforge/* || fail_out
     launcher_git add net.neoforged/* || fail_out
     launcher_git add net.fabricmc.fabric-loader/* net.fabricmc.intermediary/* || fail_out
+    launcher_git add babric/* || fail_out
     launcher_git add org.quiltmc.quilt-loader/* || fail_out
     launcher_git add org.quiltmc.hashed/* 2>/dev/null || true
     launcher_git add com.mumfrey.liteloader/* || fail_out
@@ -94,6 +101,11 @@ if [ "${DEPLOY_TO_GIT}" = true ]; then
     launcher_git add risugami/* || fail_out
     launcher_git add station-loader/* || fail_out
     launcher_git add net.minecraft.java/* net.adoptium.java/* com.azul.java/* com.ibm.java/* || fail_out
+    launcher_git add net.modificationstation.stationloader/* || fail_out
+    launcher_git add modloadermp/* || fail_out
+    launcher_git add net.ornithemc.calamus-intermediary/* || fail_out
+    launcher_git add net.ornithemc.fabric-loader/* || fail_out
+    launcher_git add risugami.modloader/* || fail_out
 
     if ! launcher_git diff --cached --exit-code; then
         launcher_git commit -a -m "Update Date ${currentDate} Time ${currentHour}:${currentMinute}:${currentSecond}" || fail_out

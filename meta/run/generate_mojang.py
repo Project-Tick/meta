@@ -1,5 +1,6 @@
 import copy
 import hashlib
+import re
 import os
 from collections import defaultdict, namedtuple
 from operator import attrgetter
@@ -110,8 +111,8 @@ PASS_VARIANTS = [
 
 # LWJGL versions we def. don't want!
 BAD_VARIANTS = [
-    "02a9f886ad37d391d2b34a08800e8bd852b92059",  # 3.4.3 (2026-09-08 13:04:44+00:00)
-    "b510ab8669cd8b031298f171aa810c7d3e7acb8f",  # 3.4.3 (2026-08-25 12:53:43+00:00)
+    "02a9f886ad37d391d2b34a08800e8bd852b92059",  # 3.4.3 (2026-09-08 13:04:44+00:00) no lwjgl-spng
+    "b510ab8669cd8b031298f171aa810c7d3e7acb8f",  # 3.4.3 (2026-08-25 12:53:43+00:00) no lwjgl-spng
     "17754e4d1045947c3b99d22b9db7e75bfb6d252a",  # 3.4.2 (2026-08-17 11:46:16+00:00) removed tinyfd
     "0ab5c885c21dfd8133277e8f557839f5fab35311",  # 3.4.1 (2026-05-26 13:48:31+00:00) no SDL
     "472ee33f7a1294822aa2d617cd6ccdfd92f949a0",  # 3.4.1 (2026-04-07 11:52:43+00:00) vulkan, has significant performance regressions
@@ -223,6 +224,22 @@ def adapt_new_style_arguments_to_traits(arguments):
                     if rule["action"] == "allow" and v and k in SUPPORTED_FEATURES:
                         foo.append(f"feature:{k}")
     return foo
+
+
+def adapt_new_style_jvm_arguments(arguments):
+    PREFIXES = ["-XX:StackShadowPages="]
+
+    result = []
+    for arg in arguments.jvm:
+        if not isinstance(arg, str):
+            continue
+        
+        if not any(arg.startswith(x) for x in PREFIXES):
+            continue
+
+        result.append(arg)
+
+    return result
 
 
 def is_macos_only(rules: Optional[MojangRules]):
@@ -511,6 +528,9 @@ def main():
             v.additional_traits.extend(
                 adapt_new_style_arguments_to_traits(mojang_version.arguments)
             )
+            if not v.additional_jvm_args:
+                v.additional_jvm_args = []
+            v.additional_jvm_args.extend(adapt_new_style_jvm_arguments(mojang_version.arguments))
         out_filename = os.path.join(
             LAUNCHER_DIR, MINECRAFT_COMPONENT, f"{v.version}.json"
         )
@@ -521,6 +541,15 @@ def main():
             if v.additional_traits == None:
                 v.additional_traits = []
             v.additional_traits.append("legacyServices")
+
+        # 13w16a-13w23a require legacyLaunch and those + 13w23b require texturepacks
+        if re.match(r"13w[1,2]\d[a-c]", v.version) and 16 <= int(v.version[3:-1]) <= 23:
+            if v.additional_traits == None:
+                v.additional_traits = []
+            if v.version != "13w23b":
+                v.additional_traits.append("legacyLaunch")
+            v.additional_traits.append("texturepacks")
+
         v.write(out_filename)
 
     for lwjglVersionVariant in lwjglVersionVariants:

@@ -1,5 +1,4 @@
 import os
-import time
 
 from meta.common import upstream_path, ensure_upstream_dir, default_session
 from meta.common.java import (
@@ -15,6 +14,7 @@ from meta.model.java import (
     ADOPTIUM_API_BASE,
     OPENJ9_API_BASE,
     ADOPTX_API_AVAILABLE_RELEASES,
+    adoptxAPIFeatureReleasesUrl,
     adoptiumAPIFeatureReleasesUrl,
     openj9APIFeatureReleasesUrl,
     AdoptxJvmImpl,
@@ -51,43 +51,17 @@ ensure_upstream_dir(AZUL_VERSIONS_DIR)
 sess = default_session()
 
 
-def filtered_available_releases(
-    available: AdoptxAvailableReleases, present_features: list[int]
-) -> AdoptxAvailableReleases:
-    filtered_features = sorted(set(present_features))
-    filtered_lts = [feature for feature in available.available_lts_releases if feature in filtered_features]
-    newest_feature = filtered_features[-1] if filtered_features else None
-    newest_lts = filtered_lts[-1] if filtered_lts else None
-
-    return AdoptxAvailableReleases(
-        available_releases=filtered_features,
-        available_lts_releases=filtered_lts,
-        most_recent_lts=newest_lts,
-        most_recent_feature_release=newest_feature,
-        most_recent_feature_version=newest_feature,
-        tip_version=newest_feature,
-    )
-
-
 def main():
     print("Getting Adoptium Release Manifests ")
-    for attempt in range(3):
-        r = sess.get(ADOPTX_API_AVAILABLE_RELEASES.format(base_url=ADOPTIUM_API_BASE))
-        if r.status_code >= 500:
-            if attempt < 2:
-                time.sleep(1 * (attempt + 1))
-                continue
-            else:
-                r.raise_for_status()
-        else:
-            r.raise_for_status()
-            break
-    else:
-        r.raise_for_status()
+    r = sess.get(ADOPTX_API_AVAILABLE_RELEASES.format(base_url=ADOPTIUM_API_BASE))
+    r.raise_for_status()
 
     available = AdoptxAvailableReleases(**r.json())
 
-    present_adoptium_features: list[int] = []
+    available_releases_file = os.path.join(
+        UPSTREAM_DIR, ADOPTIUM_DIR, "available_releases.json"
+    )
+    available.write(available_releases_file)
 
     for feature in available.available_releases:
         print("Getting Manifests for Adoptium feature release:", feature)
@@ -106,25 +80,11 @@ def main():
             )
             api_call = adoptiumAPIFeatureReleasesUrl(feature, query=query)
             print("Fetching JRE Page:", page, api_call)
-            for attempt in range(3):
-                r_rls = sess.get(api_call)
-                if r_rls.status_code == 404:
-                    break
-                elif r_rls.status_code >= 500:
-                    if attempt < 2:
-                        time.sleep(1 * (attempt + 1))
-                        continue
-                    else:
-                        r_rls.raise_for_status()
-                else:
-                    r_rls.raise_for_status()
-                    break
-            else:
-                # If all attempts failed
-                r_rls.raise_for_status()
-
+            r_rls = sess.get(api_call)
             if r_rls.status_code == 404:
                 break
+            else:
+                r_rls.raise_for_status()
 
             releases = list(AdoptxRelease(**rls) for rls in r_rls.json())
             releases_for_feature.extend(releases)
@@ -134,22 +94,11 @@ def main():
             page += 1
 
         print("Total Adoptium releases for feature:", len(releases_for_feature))
+        releases = AdoptxReleases(__root__=releases_for_feature)
         feature_file = os.path.join(
             UPSTREAM_DIR, ADOPTIUM_VERSIONS_DIR, f"java{feature}.json"
         )
-        if releases_for_feature:
-            releases = AdoptxReleases(__root__=releases_for_feature)
-            releases.write(feature_file)
-            present_adoptium_features.append(feature)
-        elif os.path.exists(feature_file):
-            os.remove(feature_file)
-
-    available_releases_file = os.path.join(
-        UPSTREAM_DIR, ADOPTIUM_DIR, "available_releases.json"
-    )
-    filtered_available_releases(
-        available, present_adoptium_features
-    ).write(available_releases_file)
+        releases.write(feature_file)
 
     print("Getting OpenJ9 Release Manifests ")
     r = sess.get(ADOPTX_API_AVAILABLE_RELEASES.format(base_url=OPENJ9_API_BASE))
@@ -157,7 +106,10 @@ def main():
 
     available = AdoptxAvailableReleases(**r.json())
 
-    present_openj9_features: list[int] = []
+    available_releases_file = os.path.join(
+        UPSTREAM_DIR, OPENJ9_DIR, "available_releases.json"
+    )
+    available.write(available_releases_file)
 
     for feature in available.available_releases:
         print("Getting Manifests for OpenJ9 feature release:", feature)
@@ -190,22 +142,13 @@ def main():
             page += 1
 
         print("Total OpenJ9 releases for feature:", len(releases_for_feature))
+        releases = AdoptxReleases(__root__=releases_for_feature)
+        if len(releases_for_feature) == 0:
+            continue
         feature_file = os.path.join(
             UPSTREAM_DIR, OPENJ9_VERSIONS_DIR, f"java{feature}.json"
         )
-        if releases_for_feature:
-            releases = AdoptxReleases(__root__=releases_for_feature)
-            releases.write(feature_file)
-            present_openj9_features.append(feature)
-        elif os.path.exists(feature_file):
-            os.remove(feature_file)
-
-    available_releases_file = os.path.join(
-        UPSTREAM_DIR, OPENJ9_DIR, "available_releases.json"
-    )
-    filtered_available_releases(
-        available, present_openj9_features
-    ).write(available_releases_file)
+        releases.write(feature_file)
 
     print("Getting Azul Release Manifests")
     zulu_packages: list[ZuluPackage] = []
@@ -227,24 +170,11 @@ def main():
 
         print("Processing Page:", page, api_call)
 
-        for attempt in range(3):
-            r = sess.get(api_call)
-            if r.status_code == 404:
-                break
-            elif r.status_code >= 500:
-                if attempt < 2:
-                    time.sleep(1 * (attempt + 1))
-                    continue
-                else:
-                    r.raise_for_status()
-            else:
-                r.raise_for_status()
-                break
-        else:
-            r.raise_for_status()
-
+        r = sess.get(api_call)
         if r.status_code == 404:
             break
+        else:
+            r.raise_for_status()
 
         packages = list(ZuluPackage(**pkg) for pkg in r.json())
         zulu_packages.extend(packages)
@@ -275,19 +205,8 @@ def main():
 
             api_call = azulApiPackageDetailUrl(pkg.package_uuid)
             print("Fetching Azul package manifest:", pkg.package_uuid)
-            for attempt in range(3):
-                r_pkg = sess.get(api_call)
-                if r_pkg.status_code >= 500:
-                    if attempt < 2:
-                        time.sleep(1 * (attempt + 1))
-                        continue
-                    else:
-                        r_pkg.raise_for_status()
-                else:
-                    r_pkg.raise_for_status()
-                    break
-            else:
-                r_pkg.raise_for_status()
+            r_pkg = sess.get(api_call)
+            r_pkg.raise_for_status()
 
             pkg_detail = ZuluPackageDetail(**r_pkg.json())
             pkg_detail.write(pkg_file)

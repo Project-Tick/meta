@@ -2,11 +2,9 @@ import os
 import re
 from packaging import version as pversion
 from operator import attrgetter
-from typing import Collection, Optional
-import hashlib
+from typing import Collection
 
-
-from meta.common import ensure_component_dir, launcher_path, upstream_path, eprint, default_session
+from meta.common import ensure_component_dir, launcher_path, upstream_path, eprint
 from meta.common.forge import (
     FORGE_COMPONENT,
     INSTALLER_MANIFEST_DIR,
@@ -18,6 +16,8 @@ from meta.common.forge import (
     FORGEWRAPPER_LIBRARY,
 )
 from meta.common.mojang import MINECRAFT_COMPONENT
+from meta.common.flexver import compare
+
 from meta.model import (
     MetaVersion,
     Dependency,
@@ -43,36 +43,6 @@ LAUNCHER_DIR = launcher_path()
 UPSTREAM_DIR = upstream_path()
 
 ensure_component_dir(FORGE_COMPONENT)
-
-sess = default_session()
-
-def update_library_info(lib: Library):
-    if not lib.downloads:
-        lib.downloads = MojangLibraryDownloads()
-    if not lib.downloads.artifact:
-        url = lib.url
-        if not url and lib.name:
-            url = f"https://maven.minecraftforge.net/{lib.name.path()}"
-        if url:
-             lib.downloads.artifact = MojangArtifact(url=url, sha1=None, size=None)
-
-    art = lib.downloads.artifact
-    if art and art.url:
-        try:
-            # Check/Fetch SHA1
-            if not art.sha1:
-                r = sess.get(art.url + ".sha1")
-                if r.status_code == 200:
-                    art.sha1 = r.text.strip()
-            
-            # Check/Fetch Size
-            if not art.size:
-                r = sess.head(art.url)
-                if r.status_code == 200 and 'Content-Length' in r.headers:
-                    art.size = int(r.headers['Content-Length'])
-        except Exception as e:
-            eprint(f"Failed to update info for {lib.name}: {e}")
-
 
 
 # Construct a set of libraries out of a Minecraft version file, for filtering.
@@ -273,8 +243,7 @@ def version_from_build_system_installer(
     v.requires = [Dependency(uid=MINECRAFT_COMPONENT, equals=version.mc_version_sane)]
     v.main_class = "io.github.zekerzhayard.forgewrapper.installer.Main"
 
-    v.main_class = "io.github.zekerzhayard.forgewrapper.installer.Main"
-
+    # FIXME: Add the size and hash here
     v.maven_files = []
 
     # load the locally cached installer file info and use it to add the installer entry in the json
@@ -306,8 +275,16 @@ def version_from_build_system_installer(
             forge_lib.downloads.artifact.url = (
                 "https://maven.minecraftforge.net/%s" % forge_lib.name.path()
             )
-        update_library_info(forge_lib)
         v.maven_files.append(forge_lib)
+
+    # set main jar as forgewrapper as the forge doesn't need the main client jar in path to run
+    if compare(version.mc_version_sane, "26.1") >= 0:
+        v.main_jar = FORGEWRAPPER_LIBRARY
+        minecraft_file = os.path.join(
+            LAUNCHER_DIR, MINECRAFT_COMPONENT, f"{version.mc_version_sane}.json"
+        )
+        minecraft_version = MetaVersion.parse_file(minecraft_file)
+        v.maven_files.append(minecraft_version.main_jar)
 
     v.libraries = []
 

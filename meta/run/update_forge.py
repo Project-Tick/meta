@@ -150,19 +150,16 @@ def process_forge_version(version, jar_path):
 
     new_sha1 = None
     sha1_file = jar_path + ".sha1"
-    if not os.path.isfile(jar_path):
-        remove_files([profile_path, installer_info_path])
-    else:
-        fileSha1 = get_file_sha1_from_file(jar_path, sha1_file)
-        try:
-            rfile = sess.get(version.url() + ".sha1")
-            rfile.raise_for_status()
-            new_sha1 = rfile.text.strip()
-            if fileSha1 != new_sha1:
-                remove_files([jar_path, profile_path, installer_info_path, sha1_file])
-        except Exception as e:
-            eprint("Failed to check sha1 %s" % version.url())
-            eprint("Error is %s" % e)
+    fileSha1 = get_file_sha1_from_file(jar_path, sha1_file)
+    try:
+        rfile = sess.get(version.url() + ".sha1")
+        rfile.raise_for_status()
+        new_sha1 = rfile.text.strip()
+        if fileSha1 != new_sha1:
+            remove_files([jar_path, profile_path, installer_info_path, sha1_file])
+    except Exception as e:
+        eprint("Failed to check sha1 %s" % version.url())
+        eprint("Error is %s" % e)
 
     installer_refresh_required = not os.path.isfile(profile_path) or not os.path.isfile(
         installer_info_path
@@ -193,10 +190,6 @@ def process_forge_version(version, jar_path):
             with suppress(KeyError):
                 with jar.open("version.json") as profile_zip_entry:
                     version_data = profile_zip_entry.read()
-
-                    version_data = re.sub(
-                        rb'([+-])(\d):(\d{2})"', rb'\g<1>0\g<2>:\g<3>"', version_data
-                    )
 
                     try:
                         # Process: does it parse?
@@ -262,9 +255,7 @@ def main():
     )
     r.raise_for_status()
     promotions_json = r.json()
-    promotions_json = r.json()
-    if not isinstance(promotions_json, dict) or "promos" not in promotions_json or not isinstance(promotions_json["promos"], dict):
-        raise ValueError("Invalid promotions_slim.json format: expected a dict with 'promos' object")
+    assert type(promotions_json) == dict
 
     promoted_key_expression = re.compile(
         "(?P<mc>[^-]+)-(?P<promotion>(latest)|(recommended))(-(?P<branch>[a-zA-Z0-9\\.]+))?"
@@ -274,6 +265,7 @@ def main():
 
     new_index = DerivedForgeIndex()
 
+    # FIXME: does not fully validate that the file has not changed format
     # NOTE: For some insane reason, the format of the versions here is special. It having a branch at the end means it
     #           affects that particular branch.
     #       We don't care about Forge having branches.
